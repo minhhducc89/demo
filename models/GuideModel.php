@@ -124,5 +124,48 @@ class GuideModel {
         
         return $result['count'] > 0;
     }
+
+    /**
+     * Đếm tổng số Tour mà HDV đang phụ trách
+     */
+    public function countToursByGuideId($guideId) {
+        $sql = "SELECT COUNT(*) as total FROM tours WHERE guide_id = ?";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->execute([$guideId]);
+        return $stmt->fetchColumn() ?? 0;
+    }
+
+    /**
+     * Lấy danh sách tour sắp tới của HDV
+     */
+    public function getUpcomingToursByGuideId($guideId) {
+        $sql = "SELECT 
+                    t.id, t.name, t.start_date,
+                    DATEDIFF(t.start_date, CURDATE()) as duration_days,
+                    CASE 
+                        WHEN t.start_date <= CURDATE() THEN 'running'
+                        ELSE 'upcoming'
+                    END as status
+                FROM tours t
+                WHERE t.guide_id = ?
+                ORDER BY t.start_date ASC
+                LIMIT 10";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->execute([$guideId]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * Đếm tổng số Khách hàng (Booking) cho các Tour của HDV
+     */
+    public function countTotalGuestsByGuideId($guideId) {
+        $sql = "SELECT SUM(b.so_luong_khach) AS total_guests 
+                FROM tb_booking b 
+                JOIN tours t ON b.tour_id = t.id
+                WHERE t.guide_id = ? AND b.trang_thai != 'Đã hủy'";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->execute([$guideId]);
+        return (int) ($stmt->fetchColumn() ?? 0);
+    }
 }
 ?>

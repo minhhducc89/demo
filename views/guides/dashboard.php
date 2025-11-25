@@ -69,8 +69,8 @@ $guideName = $_SESSION['user']['name'] ?? 'Hướng Dẫn Viên';
                             </span>
                         </td>
                         <td class="px-5 py-4 text-sm text-right">
-                            <a href="?act=bookings-checkin&tour_id=<?= $tour['id'] ?>" class="text-purple-600 hover:text-purple-900">
-                                Chi tiết & Check-in
+                            <a href="?act=tours-detail-full&id=<?= $tour['id'] ?>" class="text-purple-600 hover:text-purple-900">
+                                Chi tiết
                             </a>
                         </td>
                     </tr>

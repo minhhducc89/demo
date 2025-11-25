@@ -1,4 +1,12 @@
 <div class="max-w-6xl mx-auto">
+    <div class="mb-4">
+        <a href="?act=tours" class="inline-flex items-center gap-2 px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+            </svg>
+            Quay lại
+        </a>
+    </div>
     <div class="bg-white rounded shadow overflow-hidden border-t-4 border-blue-600 mb-6">
         <div class="p-6">
             <h1 class="text-2xl font-bold mb-2"><?= htmlspecialchars($tour['name']) ?></h1>

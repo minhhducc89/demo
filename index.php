@@ -52,6 +52,13 @@ if (in_array($act, $adminActions) && $_SESSION['user']['role'] !== 'admin') {
     die("BẠN KHÔNG CÓ QUYỀN THỰC HIỆN CHỨC NĂNG NÀY! <a href='?act=/'>Quay lại</a>");
 }
 
+// --- MIDDLEWARE: ROUTE DASHBOARD THEO ROLE ---
+if ($act === '/' || $act === 'dashboard') {
+    if ($_SESSION['user']['role'] === 'guide') {
+        $act = 'guide-dashboard';
+    }
+}
+
 // --- ROUTING (SỬ DỤNG BIẾN CONTROLLER ĐÃ KHỞI TẠO) ---
 match ($act) {
 
@@ -63,6 +70,7 @@ match ($act) {
     // Dashboard & Home
     '/'             => $tourController->dashboard(),
     'dashboard'     => $tourController->dashboard(),
+    'guide-dashboard' => $guideController->dashboard(),
     
     // Quản lý Tours
     'tours'         => $tourController->index(),

@@ -125,4 +125,23 @@ class GuideController {
         header("Location: ?act=guides");
         exit();
     }
+
+    // Dashboard cho Guide role
+    public function dashboard() {
+        // Lấy ID guide từ session
+        $guideId = $_SESSION['user']['id'] ?? null;
+        if (!$guideId) {
+            header('Location: ?act=login');
+            exit();
+        }
+
+        // Lấy dữ liệu cho guide
+        $totalTours = $this->guideModel->countToursByGuideId($guideId);
+        $totalGuests = $this->guideModel->countTotalGuestsByGuideId($guideId);
+        $upcomingTours = $this->guideModel->getUpcomingToursByGuideId($guideId);
+
+        include_once __DIR__ . '/../views/layouts/header.php';
+        include_once __DIR__ . '/../views/guides/dashboard.php';
+        include_once __DIR__ . '/../views/layouts/footer.php';
+    }
 }
