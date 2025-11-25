@@ -100,6 +100,11 @@ match ($act) {
 
     // TOUR CHI TIẾT (Tour Details)
     'tours-detail'          => $tourController->detail(),
+    'tours-detail-full'     => $tourController->detailFull(),
+    'tours-supplier-store'  => $tourController->supplierStore(),
+    'tours-supplier-detach' => $tourController->supplierDetach(),
+    'tours-policy-store'    => $tourController->policyStore(),
+    'tours-policy-delete'   => $tourController->policyDelete(),
     'tours-detail-store'    => $tourController->storeDetail(),
     'tours-detail-edit'     => $tourController->editDetail(),
     'tours-detail-update'   => $tourController->updateDetail(),

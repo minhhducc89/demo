@@ -98,7 +98,99 @@ class TourController {
                 $image = file_upload($_FILES['image'], 'tours/'); 
             }
 
-            $this->tourModel->insertTour($name, $price, $start_date, $guide_id, $image, $desc, $category_id);
+            // Insert main tour and get ID
+            $tourId = $this->tourModel->insertTour($name, $price, $start_date, $guide_id, $image, $desc, $category_id);
+
+            // --- Gallery images (multiple) ---
+            if (isset($_FILES['images'])) {
+                // Normalize multiple files
+                $files = $_FILES['images'];
+                for ($i = 0; $i < count($files['name']); $i++) {
+                    if (empty($files['name'][$i]) || $files['error'][$i] !== UPLOAD_ERR_OK) continue;
+                    $file = [
+                        'name' => $files['name'][$i],
+                        'type' => $files['type'][$i],
+                        'tmp_name' => $files['tmp_name'][$i],
+                        'error' => $files['error'][$i],
+                        'size' => $files['size'][$i]
+                    ];
+                    $saved = file_upload($file, 'tour_images/');
+                    if ($saved) {
+                        $this->tourModel->insertTourImage($tourId, $saved, null);
+                    }
+                }
+            }
+
+            // --- Prices ---
+            if (!empty($_POST['price_package_name']) && is_array($_POST['price_package_name'])) {
+                $names = $_POST['price_package_name'];
+                $adult = $_POST['price_adult'] ?? [];
+                $child = $_POST['price_child'] ?? [];
+                $app = $_POST['price_applicability'] ?? [];
+                $inc = $_POST['price_included'] ?? [];
+                foreach ($names as $idx => $pkg) {
+                    $pkg = trim($pkg);
+                    if ($pkg === '') continue;
+                    $pAdult = floatval($adult[$idx] ?? 0);
+                    $pChild = isset($child[$idx]) ? floatval($child[$idx]) : null;
+                    $pApp = $app[$idx] ?? null;
+                    $pInc = $inc[$idx] ?? null;
+                    $this->tourModel->insertPrice($tourId, $pkg, $pAdult, $pChild, $pApp, $pInc);
+                }
+            }
+
+            // --- Policies ---
+            if (!empty($_POST['policy_type']) && is_array($_POST['policy_type'])) {
+                foreach ($_POST['policy_type'] as $i => $ptype) {
+                    $ptype = trim($ptype);
+                    $pcontent = trim($_POST['policy_content'][$i] ?? '');
+                    if ($ptype && $pcontent) {
+                        $this->tourModel->insertPolicy($tourId, $ptype, $pcontent);
+                    }
+                }
+            }
+
+            // --- Suppliers ---
+            if (!empty($_POST['supplier_name']) && is_array($_POST['supplier_name'])) {
+                foreach ($_POST['supplier_name'] as $i => $sname) {
+                    $sname = trim($sname);
+                    if ($sname === '') continue;
+                    $stype = trim($_POST['supplier_service_type'][$i] ?? '');
+                    $sphone = trim($_POST['supplier_phone'][$i] ?? '');
+                    $saddr = trim($_POST['supplier_address'][$i] ?? '');
+                    $sid = $this->tourModel->insertSupplier($sname, $stype, $saddr, $sphone);
+                    if ($sid) $this->tourModel->attachSupplierToTour($tourId, $sid);
+                }
+            }
+
+            // --- Itinerary (legacy tour_details) ---
+            if (!empty($_POST['it_ngay_thu']) && is_array($_POST['it_ngay_thu'])) {
+                $days = $_POST['it_ngay_thu'];
+                $titles = $_POST['it_tieu_de'] ?? [];
+                $descs = $_POST['it_mo_ta'] ?? [];
+                // Files for itinerary images may be in $_FILES['it_hinh_anh']
+                $itFiles = $_FILES['it_hinh_anh'] ?? null;
+                for ($i = 0; $i < count($days); $i++) {
+                    $d = intval($days[$i]);
+                    $t = trim($titles[$i] ?? '');
+                    $m = trim($descs[$i] ?? '');
+                    $hinh = null;
+                    if ($itFiles && !empty($itFiles['name'][$i]) && $itFiles['error'][$i] === UPLOAD_ERR_OK) {
+                        $file = [
+                            'name' => $itFiles['name'][$i],
+                            'type' => $itFiles['type'][$i],
+                            'tmp_name' => $itFiles['tmp_name'][$i],
+                            'error' => $itFiles['error'][$i],
+                            'size' => $itFiles['size'][$i]
+                        ];
+                        $hinh = file_upload($file, 'tour_details/');
+                    }
+                    if ($t || $m) {
+                        $this->tourDetailModel->insertDetail($tourId, $d, $t ?: 'Hoạt động', $m, $hinh);
+                    }
+                }
+            }
+
             header("Location: ?act=tours"); 
             exit();
         }
@@ -115,6 +207,11 @@ class TourController {
             echo "Tour không tồn tại!";
             exit;
         }
+
+        // Related data for edit view: itinerary, policies, suppliers
+        $itinerary = $this->tourModel->getItineraryByTourId($id);
+        $policies = $this->tourModel->getPoliciesByTourId($id);
+        $suppliers = $this->tourModel->getSuppliersByTourId($id);
 
         require_once __DIR__ . '/../views/layouts/header.php';
         require_once __DIR__ . '/../views/tours/edit.php';
@@ -188,6 +285,85 @@ class TourController {
         require_once __DIR__ . '/../views/layouts/header.php';
         require_once __DIR__ . '/../views/tours/detail_schedule.php'; 
         require_once __DIR__ . '/../views/layouts/footer.php';
+    }
+
+    // [7b] Full tour detail (Gallery, Prices, Policies, Suppliers, Itinerary)
+    public function detailFull() {
+        $id = $_GET['id'] ?? null;
+        if (!$id) {
+            header('Location: ?act=tours');
+            exit();
+        }
+
+        $tour = $this->tourModel->getTourById($id);
+        if (!$tour) {
+            echo "Tour không tồn tại";
+            exit;
+        }
+
+        // Fetch related data using TourModel helper methods
+        $images = $this->tourModel->getImagesByTourId($id);
+        $prices = $this->tourModel->getPricesByTourId($id);
+        $policies = $this->tourModel->getPoliciesByTourId($id);
+        $suppliers = $this->tourModel->getSuppliersByTourId($id);
+        $itinerary = $this->tourModel->getItineraryByTourId($id);
+
+        require_once __DIR__ . '/../views/layouts/header.php';
+        require_once __DIR__ . '/../views/tours/detail_full.php';
+        require_once __DIR__ . '/../views/layouts/footer.php';
+    }
+
+    // Suppliers: create + attach
+    public function supplierStore() {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') { header('Location: ?act=tours'); exit(); }
+        $tour_id = $_POST['tour_id'] ?? null;
+        $supplier_name = trim($_POST['supplier_name'] ?? '');
+        $service_type = trim($_POST['service_type'] ?? '');
+        $address = trim($_POST['address'] ?? '');
+        $phone = trim($_POST['phone'] ?? '');
+
+        if ($tour_id && $supplier_name) {
+            // Create supplier and attach
+            $supplierId = $this->tourModel->insertSupplier($supplier_name, $service_type, $address, $phone);
+            if ($supplierId) {
+                $this->tourModel->attachSupplierToTour($tour_id, $supplierId);
+            }
+        }
+        header('Location: ?act=tours-detail-full&id=' . $tour_id);
+        exit();
+    }
+
+    public function supplierDetach() {
+        $tour_id = $_GET['tour_id'] ?? null;
+        $supplier_id = $_GET['supplier_id'] ?? null;
+        if ($tour_id && $supplier_id) {
+            $this->tourModel->detachSupplierFromTour($tour_id, $supplier_id);
+        }
+        header('Location: ?act=tours-detail-full&id=' . $tour_id);
+        exit();
+    }
+
+    // Policies: create + delete
+    public function policyStore() {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') { header('Location: ?act=tours'); exit(); }
+        $tour_id = $_POST['tour_id'] ?? null;
+        $policy_type = trim($_POST['policy_type'] ?? '');
+        $content = trim($_POST['content'] ?? '');
+        if ($tour_id && $policy_type && $content) {
+            $this->tourModel->insertPolicy($tour_id, $policy_type, $content);
+        }
+        header('Location: ?act=tours-detail-full&id=' . $tour_id);
+        exit();
+    }
+
+    public function policyDelete() {
+        $tour_id = $_GET['tour_id'] ?? null;
+        $policy_id = $_GET['policy_id'] ?? null;
+        if ($policy_id) {
+            $this->tourModel->deletePolicy($policy_id);
+        }
+        header('Location: ?act=tours-detail-full&id=' . $tour_id);
+        exit();
     }
 
     // [8] THÊM LỊCH TRÌNH CHI TIẾT

@@ -64,19 +64,13 @@
                 <tr class="hover:bg-gray-50 transition">
                     <td class="px-6 py-4 whitespace-nowrap">
                             <?php
+                                // Show single image thumbnail. Use public URL via asset().
+                                // We avoid server-side file_exists checks which previously failed.
                                 $imgName = $tour['image'] ?? null;
-                                $folder = 'tours/';
-                                
-                                $pathCheck = upload_path($folder . $imgName);
-                                // Do file đã tồn tại, lỗi nằm ở pathCheck. Thử dùng hàm realpath
-                                // $hasImage = !empty($imgName) && file_exists(realpath($pathCheck)); 
-                                // Hoặc đơn giản hơn: Bỏ qua file_exists nếu bạn chắc chắn file đã có
-                                
-                                $hasImage = !empty($imgName) && file_exists($pathCheck); // Giữ nguyên check cũ
-                                $imgUrl = asset('uploads/' . $folder . $imgName);
+                                $imgUrl = $imgName ? asset('uploads/tours/' . $imgName) : null;
                             ?>
 
-                            <?php if ($hasImage): ?>
+                            <?php if (!empty($imgName)): ?>
                                 <div class="h-16 w-24 rounded overflow-hidden shadow-sm border border-gray-200">
                                     <img src="<?= htmlspecialchars($imgUrl) ?>" 
                                         alt="Tour Image" 

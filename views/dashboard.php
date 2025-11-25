@@ -106,7 +106,7 @@
                                 <?= date('d/m/Y', strtotime($tour['start_date'])) ?>
                             </td>
                             <td class="px-5 py-4 text-sm text-right">
-                                <a href="?act=tours-detail&id=<?= $tour['id'] ?>" class="text-blue-600 hover:text-blue-900">Chi tiết</a>
+                                <a href="?act=tours-detail-full&id=<?= $tour['id'] ?>" class="text-blue-600 hover:text-blue-900">Chi tiết</a>
                             </td>
                         </tr>
                         <?php endforeach; ?>
