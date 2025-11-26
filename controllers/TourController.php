@@ -31,8 +31,8 @@ class TourController {
     $totalGuides = $this->tourModel->countGuides();
 
     // 2. LẤY DỮ LIỆU MỚI CHO BOOKING VÀ REVENUE
-    $totalBookings = $this->tourModel->countBookings(); // <--- MỚI
-    $totalRevenue = $this->tourModel->calculateTotalRevenue(); // <--- MỚI
+    $totalBookings = $this->tourModel->countBookings(); 
+    $totalRevenue = $this->tourModel->calculateTotalRevenue(); 
     
     // 3. Lấy dữ liệu danh sách tour mới nhất
     $recentTours = $this->tourModel->getRecentTours(5); // Lấy 5 tour gần nhất
@@ -41,8 +41,8 @@ class TourController {
     $data = [
         'totalTours'    => $totalTours,
         'totalGuides'   => $totalGuides,
-        'totalBookings' => $totalBookings, // <--- MỚI
-        'totalRevenue'  => $totalRevenue, // <--- MỚI
+        'totalBookings' => $totalBookings, 
+        'totalRevenue'  => $totalRevenue, 
         'recentTours'   => $recentTours,
     ];
 
@@ -221,16 +221,22 @@ class TourController {
     // [5] CẬP NHẬT TOUR
     public function update() {
         if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-            $id = $_POST['id'];
-            $name = $_POST['name'];
-            $price = $_POST['price'];
-            $start_date = $_POST['start_date'];
+            $id = $_POST['id'] ?? null;
+            $name = $_POST['name'] ?? '';
+            $price = $_POST['price'] ?? 0;
+            $start_date = $_POST['start_date'] ?? '';
             $guide_id = !empty($_POST['guide_id']) ? $_POST['guide_id'] : null;
             $category_id = !empty($_POST['category_id']) ? $_POST['category_id'] : null;
-            $desc = $_POST['description'];
+            $desc = $_POST['description'] ?? '';
+            
+            // Validate required fields
+            if (!$id || !$name || !$price || !$start_date) {
+                echo "<script>alert('Lỗi: Vui lòng nhập đầy đủ thông tin bắt buộc!'); window.history.back();</script>";
+                return;
+            }
             
             // Lấy ảnh cũ từ input hidden
-            $old_image = $_POST['old_image']; 
+            $old_image = $_POST['old_image'] ?? null; 
             $image = $old_image; // Mặc định giữ ảnh cũ
 
             // Kiểm tra: Nếu có chọn ảnh mới thì Upload Mới -> Xóa Cũ
@@ -241,15 +247,25 @@ class TourController {
                 if ($new_image) {
                     $image = $new_image; // Cập nhật tên ảnh mới để lưu DB
                     // Xóa ảnh cũ trong uploads/tours/
-                    file_delete($old_image, 'uploads/tours/');
+                    if ($old_image) {
+                        file_delete($old_image, 'uploads/tours/');
+                    }
                 }
             }
 
-            $this->tourModel->updateTour($id, $name, $price, $start_date, $guide_id, $image, $desc, $category_id);
-            header("Location: ?act=tours");
+            // Cập nhật tour
+            $result = $this->tourModel->updateTour($id, $name, $price, $start_date, $guide_id, $image, $desc, $category_id);
+            
+            if ($result) {
+                echo "<script>alert('Cập nhật tour thành công!'); window.location.href='?act=tours';</script>";
+            } else {
+                echo "<script>alert('Lỗi: Không thể cập nhật tour. Vui lòng thử lại!'); window.history.back();</script>";
+            }
             exit();
         }
     }
+        
+    
 
     // [6] XÓA TOUR
     public function delete() {
@@ -368,25 +384,35 @@ class TourController {
 
     // [8] THÊM LỊCH TRÌNH CHI TIẾT
     public function storeDetail() {
-        if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-            $tour_id = $_POST['tour_id'];
-            $ngay_thu = $_POST['ngay_thu'];
-            $tieu_de = $_POST['tieu_de'];
-            $mo_ta = $_POST['mo_ta'];
-            
-            // Xử lý upload ảnh (Lưu vào uploads/tour_details/)
-            $hinh_anh = null;
-            if (isset($_FILES['hinh_anh']) && $_FILES['hinh_anh']['size'] > 0) {
-                // Save under uploads/tour_details/
-                $hinh_anh = file_upload($_FILES['hinh_anh'], 'tour_details/'); 
-            }
-
-            $this->tourDetailModel->insertDetail($tour_id, $ngay_thu, $tieu_de, $mo_ta, $hinh_anh);
-            
-            header("Location: ?act=tours-detail&id=" . $tour_id);
-            exit();
+    if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+        $tour_id = $_POST['tour_id'] ?? null;
+        $ngay_thu = $_POST['ngay_thu'] ?? $_POST['it_ngay_thu'] ?? null;
+        $tieu_de = $_POST['tieu_de'] ?? $_POST['it_tieu_de'] ?? null;
+        $mo_ta = $_POST['mo_ta'] ?? $_POST['it_mo_ta'] ?? null;
+        
+        // Validate
+        if (!$tour_id || !$ngay_thu || !$tieu_de) {
+            echo "<script>alert('Lỗi: Vui lòng nhập đầy đủ thông tin Ngày thứ và Tiêu đề!'); window.history.back();</script>";
+            return;
         }
+        $hinh_anh = null;
+        
+        if (isset($_FILES['hinh_anh']) && $_FILES['hinh_anh']['error'] === UPLOAD_ERR_OK) {
+            // $_FILES['hinh_anh'] là mảng file PHP chuẩn
+            $hinh_anh = file_upload($_FILES['hinh_anh'], 'tour_details/'); 
+        } 
+       
+        else if (isset($_FILES['it_hinh_anh']) && $_FILES['it_hinh_anh']['error'] === UPLOAD_ERR_OK) {
+            $hinh_anh = file_upload($_FILES['it_hinh_anh'], 'tour_details/'); 
+        }
+       
+        $this->tourDetailModel->insertDetail($tour_id, $ngay_thu, $tieu_de, $mo_ta, $hinh_anh);
+        
+        
+        header("Location: ?act=tours-detail&id=" . $tour_id);
+        exit();
     }
+}
 
     // [9] FORM SỬA LỊCH TRÌNH
     public function editDetail() {
@@ -445,7 +471,7 @@ class TourController {
         exit();
     }
 
-} // End Class TourController
+} 
 
 
 ?>

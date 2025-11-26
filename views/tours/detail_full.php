@@ -53,10 +53,31 @@
                             <hr class="my-3">
 
                             <h3 class="font-bold mb-2">Thông tin nhanh</h3>
-                            <div class="text-sm text-gray-700">
-                                <div><strong>Mã tour:</strong> <?= $tour['id'] ?></div>
-                                <div><strong>HDV:</strong> <?= htmlspecialchars($tour['guide_name'] ?? 'Chưa gán') ?></div>
-                                <div><strong>Danh mục:</strong> <?= htmlspecialchars($tour['category_name'] ?? 'Không rõ') ?></div>
+                            <div class="text-sm text-gray-700 space-y-2">
+                                <div class="flex items-center gap-2">
+                                    <strong class="text-gray-600">Mã tour:</strong>
+                                    <span class="px-2 py-0.5 inline-flex text-xs leading-5 font-bold rounded-full bg-yellow-100 text-yellow-800">
+                                        <?= $tour['id'] ?>
+                                    </span>
+                                </div>
+                                
+                                <div class="flex items-center gap-2">
+                                    <strong class="text-gray-600">HDV:</strong>
+                                    <?php if(isset($tour['guide_name']) && $tour['guide_name']): ?>
+                                        <span class="px-2 py-0.5 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                            <?= htmlspecialchars($tour['guide_name']) ?>
+                                        </span>
+                                    <?php else: ?>
+                                        <span class="px-2 py-0.5 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">Chưa gán</span>
+                                    <?php endif; ?>
+                                </div>
+
+                                <div class="flex items-center gap-2">
+                                    <strong class="text-gray-600">Danh mục:</strong>
+                                    <span class="px-2 py-0.5 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
+                                        <?= htmlspecialchars($tour['category_name'] ?? 'Không rõ') ?>
+                                    </span>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -74,103 +95,51 @@
 
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div class="lg:col-span-2">
-                    <h3 class="text-lg font-bold mb-3">Lịch trình</h3>
-
-                    <?php if (empty($itinerary)): ?>
-                        <div class="bg-white p-6 rounded border text-gray-500">Chưa có lịch trình chi tiết.</div>
-                    <?php else: ?>
-                        <?php foreach ($itinerary as $day): ?>
-                            <div class="bg-white p-4 rounded border mb-3">
-                                <div class="font-bold mb-2">Ngày <?= htmlspecialchars($day['day_number']) ?></div>
-                                <?php foreach ($day['activities'] as $act): ?>
-                                    <div class="mb-3 pb-3 border-b last:border-b-0">
-                                        <!-- Tiêu đề hoạt động -->
-                                        <div class="font-semibold text-gray-900"><?= htmlspecialchars($act['location_name'] ?? ($act['tieu_de'] ?? 'Hoạt động')) ?></div>
-                                        
-                                        <!-- Mô tả -->
-                                        <?php if (!empty($act['mo_ta'] ?? ($act['activity_details'] ?? ''))): ?>
-                                            <div class="text-sm text-gray-600 mt-1"><?= nl2br(htmlspecialchars($act['mo_ta'] ?? ($act['activity_details'] ?? ''))) ?></div>
-                                        <?php endif; ?>
-                                        
-                                        <!-- Ảnh nếu có -->
-                                        <?php if (!empty($act['hinh_anh'] ?? null)): ?>
-                                            <?php 
-                                                $detailImgUrl = asset('uploads/tour_details/' . $act['hinh_anh']);
-                                                $detailImgPath = upload_path('tour_details/' . $act['hinh_anh']);
-                                            ?>
-                                            <div class="mt-2">
-                                                <img src="<?= htmlspecialchars($detailImgUrl) ?>" alt="<?= htmlspecialchars($act['tieu_de'] ?? '') ?>" class="w-full h-auto rounded border">
-                                            </div>
-                                        <?php endif; ?>
-                                        
-                                        <!-- Time nếu có -->
-                                        <?php if (!empty($act['start_time'])): ?>
-                                            <div class="text-xs text-gray-500 mt-2">Giờ: <?= htmlspecialchars($act['start_time']) ?></div>
-                                        <?php endif; ?>
-                                    </div>
-                                <?php endforeach; ?>
-                            </div>
-                        <?php endforeach; ?>
-                    <?php endif; ?>
 
                     <h3 class="text-lg font-bold mb-3 mt-6">Chính sách</h3>
-                    <?php if (!empty($policies)): ?>
-                        <?php foreach ($policies as $pol): ?>
-                            <div class="bg-white p-3 rounded border mb-2 flex justify-between items-start">
-                                <div>
-                                    <div class="font-semibold"><?= htmlspecialchars($pol['policy_type'] ?? 'Chính sách') ?></div>
-                                    <div class="text-sm text-gray-700"><?= nl2br(htmlspecialchars($pol['content'])) ?></div>
-                                </div>
-                                <div>
-                                    <a href="?act=tours-policy-delete&tour_id=<?= $tour['id'] ?>&policy_id=<?= $pol['id'] ?>" onclick="return confirm('Xóa chính sách này?')" class="text-red-500 text-xs">Xóa</a>
-                                </div>
-                            </div>
-                        <?php endforeach; ?>
-                    <?php else: ?>
-                        <div class="text-sm text-gray-500">Chưa có chính sách.</div>
-                    <?php endif; ?>
 
-                    <form action="?act=tours-policy-store" method="POST" class="mt-3 space-y-2">
-                        <input type="hidden" name="tour_id" value="<?= $tour['id'] ?>">
-                        <input type="text" name="policy_type" placeholder="Loại chính sách (Ví dụ: Hủy/Hoàn)" required class="w-full border border-gray-300 rounded px-2 py-1 text-sm">
-                        <textarea name="content" placeholder="Nội dung chính sách" required class="w-full border border-gray-300 rounded px-2 py-1 text-sm"></textarea>
-                        <div class="flex justify-end">
-                            <button type="submit" class="px-3 py-1 bg-blue-600 text-white rounded text-sm">Thêm chính sách</button>
-                        </div>
-                    </form>
-                </div>
+                                <?php if (!empty($policies)): ?>
+                                    <?php foreach ($policies as $pol): ?>
+                                        <div class="bg-white p-3 rounded border mb-2">
+                                            <div class="font-semibold"><?= htmlspecialchars($pol['policy_type'] ?? 'Chính sách') ?></div>
+                                            <div class="text-sm text-gray-700"><?= nl2br(htmlspecialchars($pol['content'])) ?></div>
+                                        </div>
+                                    <?php endforeach; ?>
+                                <?php else: ?>
+                                    <div class="text-sm text-gray-500">Chưa có chính sách.</div>
+                                <?php endif; ?>
 
-                <aside class="bg-white p-4 rounded border">
-                    <h4 class="font-bold mb-2">Đối tác / Nhà cung cấp</h4>
-                    <?php if (!empty($suppliers)): ?>
-                        <ul class="text-sm space-y-2 mb-3">
-                            <?php foreach ($suppliers as $s): ?>
-                                <li class="flex justify-between items-start">
-                                    <div>
-                                        <div class="font-semibold"><?= htmlspecialchars($s['supplier_name']) ?></div>
-                                        <div class="text-xs text-gray-600"><?= htmlspecialchars($s['service_type'] ?? '') ?> <?php if(!empty($s['phone'])): ?> &middot; <?= htmlspecialchars($s['phone']) ?><?php endif; ?></div>
-                                    </div>
-                                    <div>
-                                        <a href="?act=tours-supplier-detach&tour_id=<?= $tour['id'] ?>&supplier_id=<?= $s['id'] ?>" onclick="return confirm('Gỡ liên kết nhà cung cấp này?')" class="text-red-500 text-xs">Gỡ</a>
-                                    </div>
-                                </li>
-                            <?php endforeach; ?>
-                        </ul>
-                    <?php else: ?>
-                        <div class="text-sm text-gray-500 mb-3">Chưa liên kết nhà cung cấp.</div>
-                    <?php endif; ?>
 
-                    <form action="?act=tours-supplier-store" method="POST" class="space-y-2">
-                        <input type="hidden" name="tour_id" value="<?= $tour['id'] ?>">
-                        <input type="text" name="supplier_name" placeholder="Tên nhà cung cấp" required class="w-full border border-gray-300 rounded px-2 py-1 text-sm">
-                        <input type="text" name="service_type" placeholder="Loại dịch vụ (ví dụ: Khách sạn)" class="w-full border border-gray-300 rounded px-2 py-1 text-sm">
-                        <input type="text" name="phone" placeholder="SĐT" class="w-full border border-gray-300 rounded px-2 py-1 text-sm">
-                        <textarea name="address" placeholder="Địa chỉ" class="w-full border border-gray-300 rounded px-2 py-1 text-sm"></textarea>
-                        <div class="flex justify-end">
-                            <button type="submit" class="px-3 py-1 bg-green-600 text-white rounded text-sm">Thêm</button>
-                        </div>
-                    </form>
-                </aside>
+                                <aside class="bg-white p-4 rounded border mt-6">
+                                    <h4 class="font-bold mb-2">Đối tác / Nhà cung cấp</h4>
+
+                                    <?php if (!empty($suppliers)): ?>
+                                        <ul class="text-sm space-y-2 mb-3">
+                                            <?php foreach ($suppliers as $s): ?>
+                                                <li class="flex justify-between items-start">
+                                                    <div>
+                                                        <div class="font-semibold"><?= htmlspecialchars($s['supplier_name']) ?></div>
+
+                                                        <div class="text-xs text-gray-600">
+                                                            <?= htmlspecialchars($s['service_type'] ?? '') ?>
+                                                            <?php if (!empty($s['phone'])): ?>
+                                                                &middot; <?= htmlspecialchars($s['phone']) ?>
+                                                            <?php endif; ?>
+                                                        </div>
+
+                                                        <?php if (!empty($s['address'])): ?>
+                                                            <div class="text-xs text-gray-500"><?= htmlspecialchars($s['address']) ?></div>
+                                                        <?php endif; ?>
+                                                    </div>
+                                                </li>
+                                            <?php endforeach; ?>
+                                        </ul>
+                                    <?php else: ?>
+                                        <div class="text-sm text-gray-500 mb-3">Chưa liên kết nhà cung cấp.</div>
+                                    <?php endif; ?>
+                                </aside>
+
+                   
             </div>
         </div>
     </div>

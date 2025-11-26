@@ -13,30 +13,39 @@
             <div class="bg-white p-6 rounded-lg shadow-md border-t-4 border-green-500 sticky top-4">
                 <h3 class="font-bold text-lg text-gray-800 mb-4 border-b pb-2">Thêm Hoạt Động Mới</h3>
                 
-                <form action="?act=tours-detail-store" method="POST" enctype="multipart/form-data" class="space-y-4">
-                    <input type="hidden" name="tour_id" value="<?= $tour['id'] ?>">
+                <form action="?act=tours-detail-store" method="POST" enctype="multipart/form-data" class="p-6 space-y-5">
+                    <input type="hidden" name="tour_id" value="<?= $tour['id'] ?? '' ?>"> 
                     
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Ngày thứ</label>
-                        <input type="number" name="ngay_thu" placeholder="VD: 1" required class="w-full border border-gray-300 rounded px-3 py-2 focus:ring-2 focus:ring-green-500 outline-none">
-                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Ngày thứ <span class="text-red-500">*</span></label>
+                            <input type="number" name="ngay_thu" placeholder="VD: 1" required class="w-full border border-gray-300 rounded px-3 py-2 focus:ring-2 focus:ring-green-500 outline-none transition">
+                        </div>
 
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Tiêu đề hoạt động</label>
-                        <input type="text" name="tieu_de" placeholder="VD: Tham quan Vịnh Hạ Long" required class="w-full border border-gray-300 rounded px-3 py-2 focus:ring-2 focus:ring-green-500 outline-none">
+                        <div class="col-span-2">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Tiêu đề hoạt động <span class="text-red-500">*</span></label>
+                            <input type="text" name="tieu_de" placeholder="VD: Tham quan Vịnh Hạ Long" required class="w-full border border-gray-300 rounded px-3 py-2 focus:ring-2 focus:ring-green-500 outline-none transition">
+                        </div>
                     </div>
-
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Hình ảnh minh họa</label>
-                        <input type="file" name="hinh_anh" class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100 transition border border-gray-300 rounded">
+                    
+                    <div class="flex gap-4 items-center">
+                        <div class="flex-1">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Hình ảnh minh họa</label>
+                            <input type="file" name="hinh_anh" id="hinh_anh_input" class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100 transition border border-gray-300 rounded">
+                        </div>
+                        
+                        <div class="w-24 h-24 flex-shrink-0 bg-gray-100 rounded-lg overflow-hidden border flex items-center justify-center text-xs text-gray-400" id="image-preview-container">
+                            Xem trước
+                        </div>
                     </div>
-
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Mô tả hoạt động</label>
-                        <textarea name="mo_ta" rows="4" class="w-full border border-gray-300 rounded px-3 py-2 focus:ring-2 focus:ring-green-500 outline-none"></textarea>
+                        <textarea name="mo_ta" rows="4" class="w-full border border-gray-300 rounded px-3 py-2 focus:ring-2 focus:ring-green-500 outline-none transition"></textarea>
                     </div>
 
-                    <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 rounded shadow transition">Thêm Hoạt Động</button>
+                    <div class="flex justify-end pt-4 border-t">
+                        <button type="submit" class="px-6 py-2 bg-green-600 text-white font-semibold rounded shadow hover:bg-green-700 focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition">Lưu Hoạt Động</button>
+                    </div>
                 </form>
             </div>
         </div>
@@ -86,3 +95,23 @@
         </div>
     </div>
 </div>
+
+
+<script>
+    document.getElementById('hinh_anh_input')?.addEventListener('change', function(e) {
+        const previewContainer = document.getElementById('image-preview-container');
+        const file = e.target.files[0];
+        
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                // Hiển thị ảnh
+                previewContainer.innerHTML = `<img src="${e.target.result}" class="w-full h-full object-cover" alt="Preview" />`;
+            };
+            reader.readAsDataURL(file);
+        } else {
+            // Trường hợp người dùng hủy chọn file
+            previewContainer.innerHTML = 'Xem trước';
+        }
+    });
+</script>

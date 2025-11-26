@@ -5,7 +5,7 @@ class TourDetailModel {
     $this->conn = $conn;
     }
 
-    // ... (getAll, getById giữ nguyên)
+    
 
     // Lấy chi tiết theo ID tour
     public function getDetailsByTourId($tour_id) {

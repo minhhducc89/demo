@@ -74,11 +74,31 @@ class TourModel {
     }
 
     // 1. Lấy thông tin chi tiết 1 tour để sửa
-    public function getTourById($id) {
-        $sql = "SELECT * FROM tours WHERE id = :id";
+        public function getTourById($id) {
+        $sql = "
+            SELECT 
+                t.*, 
+                u.name AS guide_name,
+                c.name AS category_name
+            FROM 
+                tours t
+            LEFT JOIN 
+                users u ON t.guide_id = u.id  -- THAY ĐỔI: JOIN với bảng users (đóng vai trò là guides)
+            LEFT JOIN 
+                categories c ON t.category_id = c.id
+            WHERE 
+                t.id = :id
+        ";
+
+        // Chuẩn bị và thực thi truy vấn
         $stmt = $this->conn->prepare($sql);
+        
+        // Bind tham số
         $stmt->execute([':id' => $id]);
-        return $stmt->fetch();
+        
+        // Trả về kết quả dưới dạng mảng kết hợp
+        // Lưu ý: Đảm bảo PDO::FETCH_ASSOC hoặc cấu hình fetch mặc định trả về mảng kết hợp.
+        return $stmt->fetch(PDO::FETCH_ASSOC); 
     }
 
     // 2. Cập nhật thông tin tour
@@ -91,7 +111,7 @@ class TourModel {
                 WHERE id = :id";
         
         $stmt = $this->conn->prepare($sql);
-        $stmt->execute([
+        return $stmt->execute([
             ':name' => $name,
             ':price' => $price,
             ':start_date' => $start_date,
